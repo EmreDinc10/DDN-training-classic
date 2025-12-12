@@ -32,10 +32,11 @@ c.data_loader_kwargs = dnnlib.EasyDict(
 )
 
 # Network configuration (DDN)
+# Note: img_resolution will be auto-detected from dataset, but set default
 c.network_kwargs = dnnlib.EasyDict(
     class_name="training.networks.DDNPrecond",
     model_type="PHDDN",
-    img_resolution=32,
+    img_resolution=None,  # Will be auto-detected from dataset
     in_channels=3,
     out_channels=3,
     label_dim=0,

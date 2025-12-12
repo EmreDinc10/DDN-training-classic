@@ -15,7 +15,45 @@ This guide explains how to run DDN training on Google Colab using the minimal tr
 
 ### Step 2: Prepare Dataset
 
-**Option A: Use CIFAR-10 (prepared ZIP)**
+**Option A: Use MNIST (Recommended for Quick Testing)**
+```python
+# Cell 2: Download and prepare MNIST dataset
+import torchvision
+import torchvision.transforms as transforms
+from torchvision.datasets import MNIST
+import os
+import zipfile
+from PIL import Image
+import numpy as np
+
+# Create datasets directory
+os.makedirs("datasets", exist_ok=True)
+os.makedirs("datasets/mnist_temp", exist_ok=True)
+
+# Download MNIST and save as images
+print("Downloading MNIST dataset...")
+transform = transforms.Compose([transforms.Resize((28, 28)), transforms.ToTensor()])
+mnist_train = MNIST(root="datasets/mnist_temp", train=True, download=True, transform=None)
+
+# Save images to temporary directory
+print("Converting MNIST to images...")
+for idx in range(len(mnist_train)):
+    img, label = mnist_train[idx]
+    # Convert to RGB (3 channels)
+    img_rgb = img.convert('RGB')
+    # Save with label in filename for organization
+    img_rgb.save(f"datasets/mnist_temp/{idx:05d}_{label}.png")
+
+# Create ZIP file using dataset_tool.py
+print("Creating ZIP dataset...")
+!python dataset_tool.py --source=datasets/mnist_temp --dest=datasets/mnist-28x28.zip
+
+# Cleanup
+!rm -rf datasets/mnist_temp
+print("✓ MNIST dataset ready at: datasets/mnist-28x28.zip")
+```
+
+**Option B: Use CIFAR-10**
 ```python
 # Cell 2: Download CIFAR-10 dataset
 !mkdir -p datasets
@@ -23,7 +61,7 @@ This guide explains how to run DDN training on Google Colab using the minimal tr
 # Note: You may need to convert this to the expected format using dataset_tool.py
 ```
 
-**Option B: Use your own dataset**
+**Option C: Use your own dataset**
 ```python
 # Cell 2: Upload your dataset ZIP file
 from google.colab import files
@@ -40,7 +78,8 @@ uploaded = files.upload()  # Upload your dataset.zip file
 import os
 
 # Set environment variables (optional - defaults are fine)
-os.environ["DATA_PATH"] = "datasets/cifar10-32x32.zip"
+os.environ["DATA_PATH"] = "datasets/mnist-28x28.zip"  # Use MNIST
+# os.environ["DATA_PATH"] = "datasets/cifar10-32x32.zip"  # Or use CIFAR-10
 os.environ["OUTDIR"] = "/content/training-runs/minimal-test"
 os.environ["BATCH_SIZE"] = "32"
 os.environ["BATCH_GPU"] = "32"
@@ -67,23 +106,45 @@ Copy this into a new Colab notebook:
 print("✓ Setup complete!")
 
 # ============================================================================
-# CELL 2: Prepare Dataset
+# CELL 2: Prepare Dataset - MNIST
 # ============================================================================
-# Option 1: Download CIFAR-10 (if available)
-# !mkdir -p datasets
-# !wget -O datasets/cifar10-32x32.zip <dataset_url>
-
-# Option 2: Upload your dataset
-from google.colab import files
+import torchvision
+import torchvision.transforms as transforms
+from torchvision.datasets import MNIST
 import os
-os.makedirs("datasets", exist_ok=True)
-# Upload your ZIP file when prompted
-uploaded = files.upload()
-for filename in uploaded.keys():
-    if filename.endswith('.zip'):
-        !mv {filename} datasets/
+import zipfile
+from PIL import Image
 
-print("✓ Dataset ready!")
+# Create datasets directory
+os.makedirs("datasets", exist_ok=True)
+os.makedirs("datasets/mnist_temp", exist_ok=True)
+
+# Download MNIST and save as images
+print("Downloading MNIST dataset...")
+mnist_train = MNIST(root="datasets/mnist_temp", train=True, download=True, transform=None)
+
+# Save images to temporary directory
+print("Converting MNIST to images...")
+for idx in range(len(mnist_train)):
+    img, label = mnist_train[idx]
+    # Convert to RGB (3 channels) and resize if needed
+    img_rgb = img.convert('RGB')
+    img_rgb.save(f"datasets/mnist_temp/{idx:05d}_{label}.png")
+
+# Create ZIP file using dataset_tool.py
+print("Creating ZIP dataset...")
+!python dataset_tool.py --source=datasets/mnist_temp --dest=datasets/mnist-28x28.zip
+
+# Cleanup temporary files
+!rm -rf datasets/mnist_temp
+print("✓ MNIST dataset ready at: datasets/mnist-28x28.zip")
+
+# Alternative: Upload your own dataset
+# from google.colab import files
+# uploaded = files.upload()
+# for filename in uploaded.keys():
+#     if filename.endswith('.zip'):
+#         !mv {filename} datasets/
 
 # ============================================================================
 # CELL 3: Configure Training
@@ -92,7 +153,7 @@ import os
 
 # Training configuration
 config = {
-    "DATA_PATH": "datasets/cifar10-32x32.zip",  # Change to your dataset
+    "DATA_PATH": "datasets/mnist-28x28.zip",  # Use MNIST (or change to your dataset)
     "OUTDIR": "/content/training-runs/minimal-test",
     "BATCH_SIZE": "32",      # Total batch size
     "BATCH_GPU": "32",       # Per GPU batch size
@@ -179,13 +240,13 @@ The minimal script prints progress every 1k images (`kimg_per_tick=1`). You'll s
 - Consider using Colab Pro for better GPUs
 - Reduce `TOTAL_KIMG` for faster testing
 
-## Using Full Training Script
+## Using MNIST with Full Training Script
 
-For full training with all options:
+For full training with MNIST:
 
 ```python
 !python train.py \
-  --data=datasets/cifar10-32x32.zip \
+  --data=datasets/mnist-28x28.zip \
   --outdir=/content/training-runs \
   --batch=32 \
   --batch-gpu=32 \
@@ -193,6 +254,17 @@ For full training with all options:
   --tick=5 \
   --snap=10
 ```
+
+## MNIST Dataset Notes
+
+- **Resolution**: 28x28 (grayscale converted to RGB)
+- **Size**: 60,000 training images
+- **Format**: ZIP file created by `dataset_tool.py`
+- **Advantages**: 
+  - Small dataset size (fast download/preparation)
+  - Quick training (good for testing)
+  - Simple images (easier to observe progress)
+- **Training time**: ~5-10 minutes for 10k images on Colab GPU
 
 ## Next Steps
 
