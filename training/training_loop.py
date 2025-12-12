@@ -257,10 +257,19 @@ def training_loop(
             f"reserved {training_stats.report0('Resources/peak_gpu_mem_reserved_gb', torch.cuda.max_memory_reserved(device) / 2**30):<6.2f}"
         ]
         torch.cuda.reset_peak_memory_stats()
+        # Safely handle all string operations
+        fields_str = " ".join(str(f) for f in fields if f is not None)
+        try:
+            mean_str = boxx.strnum(loss.sum().tolist()/images.numel())
+            if mean_str is None:
+                mean_str = str(loss.sum().tolist()/images.numel())
+        except (AttributeError, TypeError):
+            mean_str = str(loss.sum().tolist()/images.numel())
+        loss_val = round(loss_.tolist(), 3) if hasattr(loss_, 'tolist') else loss_
         dist.print0(
-            " ".join(fields)
-            + f" loss {round(loss_.tolist(),3)}"
-            + f"/mean {boxx.strnum(loss.sum().tolist()/images.numel())}"
+            fields_str
+            + f" loss {loss_val}"
+            + f"/mean {mean_str}"
         )
 
         # Check for abort.
