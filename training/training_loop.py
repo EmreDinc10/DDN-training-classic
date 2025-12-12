@@ -258,13 +258,18 @@ def training_loop(
         ]
         torch.cuda.reset_peak_memory_stats()
         try:
-            mean_str = boxx.strnum(loss.sum().tolist()/images.numel()) or str(loss.sum().tolist()/images.numel())
+            mean_val = loss.sum().tolist()/images.numel()
+            mean_str = boxx.strnum(mean_val)
+            if mean_str is None:
+                mean_str = str(mean_val)
+            else:
+                mean_str = str(mean_str)
         except (AttributeError, TypeError):
             mean_str = str(loss.sum().tolist()/images.numel())
+        fields_str = str(" ".join(fields))
+        loss_str = str(round(loss_.tolist(), 3))
         dist.print0(
-            " ".join(fields)
-            + f" loss {round(loss_.tolist(),3)}"
-            + f"/mean {mean_str}"
+            fields_str + " loss " + loss_str + "/mean " + mean_str
         )
 
         # Check for abort.
