@@ -266,10 +266,11 @@ def training_loop(
                 mean_str = str(mean_str)
         except (AttributeError, TypeError):
             mean_str = str(loss.sum().tolist()/images.numel())
-        fields_str = str(" ".join(fields))
+        # Filter out None values and ensure all are strings
+        fields_str = " ".join(str(f) for f in fields if f is not None)
         loss_str = str(round(loss_.tolist(), 3))
         dist.print0(
-            fields_str + " loss " + loss_str + "/mean " + mean_str
+            str(fields_str) + " loss " + str(loss_str) + "/mean " + str(mean_str)
         )
 
         # Check for abort.
