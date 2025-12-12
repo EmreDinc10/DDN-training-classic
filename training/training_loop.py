@@ -257,7 +257,10 @@ def training_loop(
             f"reserved {training_stats.report0('Resources/peak_gpu_mem_reserved_gb', torch.cuda.max_memory_reserved(device) / 2**30):<6.2f}"
         ]
         torch.cuda.reset_peak_memory_stats()
-        desc = boxx.cf.desc if boxx.cf.desc is not None else ""
+        try:
+            desc = str(boxx.cf.desc) if hasattr(boxx, 'cf') and hasattr(boxx.cf, 'desc') and boxx.cf.desc is not None else ""
+        except (AttributeError, TypeError):
+            desc = ""
         dist.print0(
             (desc + ": " if desc else "")
             + " ".join(fields)
