@@ -258,7 +258,10 @@ def training_loop(
         ]
         torch.cuda.reset_peak_memory_stats()
         try:
-            desc = str(boxx.cf.desc) if hasattr(boxx, 'cf') and hasattr(boxx.cf, 'desc') and boxx.cf.desc is not None else ""
+            if hasattr(boxx, 'cf') and hasattr(boxx.cf, 'desc') and boxx.cf.desc is not None:
+                desc = str(boxx.cf.desc)
+            else:
+                desc = ""
         except (AttributeError, TypeError):
             desc = ""
         dist.print0(
