@@ -80,16 +80,20 @@ import sddn
 sddn.DiscreteDistributionOutput.learn_residual = True
 sddn.DiscreteDistributionOutput.chain_dropout = 0.05
 
-# Validate dataset
+# Validate dataset and set network resolution
 try:
     dataset_obj = dnnlib.util.construct_class_by_name(**c.dataset_kwargs)
     dataset_name = dataset_obj.name
-    c.dataset_kwargs.resolution = dataset_obj.resolution
+    dataset_resolution = dataset_obj.resolution
+    c.dataset_kwargs.resolution = dataset_resolution
     c.dataset_kwargs.max_size = len(dataset_obj)
-    print(f"Dataset: {dataset_name}, Resolution: {dataset_obj.resolution}, Size: {len(dataset_obj)}")
+    # Set network resolution from dataset (auto-detect)
+    c.network_kwargs.img_resolution = dataset_resolution
+    print(f"Dataset: {dataset_name}, Resolution: {dataset_resolution}x{dataset_resolution}, Size: {len(dataset_obj)}")
     del dataset_obj
 except Exception as e:
     print(f"Error loading dataset: {e}")
+    print(f"Make sure the dataset exists at: {c.dataset_kwargs.path}")
     sys.exit(1)
 
 # Print configuration
