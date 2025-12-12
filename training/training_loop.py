@@ -257,20 +257,38 @@ def training_loop(
             f"reserved {training_stats.report0('Resources/peak_gpu_mem_reserved_gb', torch.cuda.max_memory_reserved(device) / 2**30):<6.2f}"
         ]
         torch.cuda.reset_peak_memory_stats()
+        # Handle mean_str with explicit None guardrails
         try:
             mean_val = loss.sum().tolist()/images.numel()
             mean_str = boxx.strnum(mean_val)
             if mean_str is None:
-                mean_str = str(mean_val)
+                mean_str = ""
             else:
-                mean_str = str(mean_str)
+                mean_str = str(mean_str) if mean_str is not None else ""
         except (AttributeError, TypeError):
-            mean_str = str(loss.sum().tolist()/images.numel())
-        # Filter out None values and ensure all are strings
-        fields_str = " ".join(str(f) for f in fields if f is not None)
-        loss_str = str(round(loss_.tolist(), 3))
+            try:
+                mean_str = str(loss.sum().tolist()/images.numel())
+            except:
+                mean_str = ""
+        if mean_str is None:
+            mean_str = ""
+        
+        # Handle fields_str with explicit None guardrails
+        fields_str = " ".join(str(f) if f is not None else "" for f in fields)
+        if fields_str is None:
+            fields_str = ""
+        
+        # Handle loss_str with explicit None guardrails
+        try:
+            loss_val = round(loss_.tolist(), 3)
+            loss_str = str(loss_val) if loss_val is not None else ""
+        except:
+            loss_str = ""
+        if loss_str is None:
+            loss_str = ""
+        
         dist.print0(
-            str(fields_str) + " loss " + str(loss_str) + "/mean " + str(mean_str)
+            fields_str + " loss " + loss_str + "/mean " + mean_str
         )
 
         # Check for abort.
