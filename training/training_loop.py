@@ -125,9 +125,9 @@ def training_loop(
     )  # training.augment.AugmentPipe
     # Use DDP only if multiple GPUs, otherwise use model directly
     if dist.get_world_size() > 1:
-        ddp = torch.nn.parallel.DistributedDataParallel(
-            net, device_ids=[device], broadcast_buffers=False
-        )
+    ddp = torch.nn.parallel.DistributedDataParallel(
+        net, device_ids=[device], broadcast_buffers=False
+    )
     else:
         ddp = net  # Single GPU - no need for DDP
     if ema_halflife_kimg:
